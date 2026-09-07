@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "Salesforce Metadata Explorer",
+  "version": "1.2.0",
+  "description": "Browse Salesforce metadata, pick components, and commit or deploy them through Copado user stories.",
+  "permissions": ["cookies", "activeTab", "tabs", "storage"],
+  "host_permissions": [
+    "https://*.salesforce.com/*",
+    "https://*.force.com/*",
+    "https://*.copado.com/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Salesforce Metadata Explorer"
+  }
+}
