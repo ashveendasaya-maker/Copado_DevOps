@@ -72,6 +72,11 @@ body {
 
 .icon-btn:hover { background: rgba(255, 255, 255, 0.15); }
 
+/* Nothing to act on: dimmed rather than hidden, so the control stays where it
+   is expected and the title says what is missing. */
+.icon-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.icon-btn:disabled:hover { background: none; }
+
 /* ---------- Connection banner ---------- */
 
 /* Both connections, one line each. A missing one is red rather than grey: it
@@ -160,6 +165,15 @@ body {
 
 .icon-btn.dark:hover { background: #f3f6f9; border-color: #0176d3; color: #0176d3; }
 .icon-btn.dark[aria-expanded="true"] { background: #0176d3; border-color: #0176d3; color: #fff; }
+
+.icon-btn.dark:disabled { opacity: 1; color: #a8b7c7; border-color: #e5e5e5; background: #fff; }
+.icon-btn.dark:disabled:hover { background: #fff; border-color: #e5e5e5; color: #a8b7c7; }
+
+#browse-bar input[type="search"]:disabled {
+  background: #f3f6f9;
+  color: #a8b7c7;
+  cursor: not-allowed;
+}
 
 /* Says a filter is on without opening the panel to find out. */
 .filter-dot {
