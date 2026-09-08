@@ -338,7 +338,7 @@ const CopadoAI = (() => {
     const detail = detailText(body);
     const hint = hintFor(res.status, detail);
 
-    console.error(`Copado AI: ${where} — ${status}`, body);
+    //console.error(`Copado AI: ${where} — ${status}`, body);
 
     return [
       detail || `Copado rejected the request (${status}).`,
@@ -631,7 +631,7 @@ const CopadoAI = (() => {
       // not worth putting on screen: the question the button asks is whether
       // the key works, and a dialogue count does not help answer it.
       const list = Array.isArray(body) ? body : body?.results || body?.dialogues || [];
-      console.debug('Copado AI verify: %d dialogue(s) visible to this key', list.length);
+      ///console.debug('Copado AI verify: %d dialogue(s) visible to this key', list.length);
 
       return { ok: true, reason: `Connected to organization ${settings.organizationId}.` };
     } catch (err) {
