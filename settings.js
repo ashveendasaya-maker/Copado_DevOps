@@ -51,6 +51,13 @@ let revealAllowed = false;
 
 const guardOf = async () => (await chrome.storage.local.get(GUARD_KEY))[GUARD_KEY] || null;
 
+// "key", "key and organization id", "key, organization id and reveal password"
+const listOf = (parts) => (parts.length < 3
+  ? parts.join(' and ')
+  : `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}`);
+
+const sentence = (text) => text.charAt(0).toUpperCase() + text.slice(1);
+
 async function wireCopadoAi() {
   await renderAiState();
 
@@ -128,7 +135,23 @@ async function wireCopadoAi() {
   // reinstalling. Destroying both is safe in a way that showing either is
   // not: whoever can click this could already clear the settings.
   $('ai-clear').addEventListener('click', async () => {
-    if (!confirm('Remove the Copado AI key, organization id and reveal password?')) return;
+    // What is actually stored, asked before anything is promised. Naming all
+    // three regardless reports removing values the user never set, which reads
+    // as the extension having held something it did not.
+    const settings = await CopadoAI.load();
+    const held = [
+      settings.apiKey && 'key',
+      settings.organizationId && 'organization id',
+      (await guardOf()) && 'reveal password',
+    ].filter(Boolean);
+
+    if (!held.length) {
+      showAiMessage('Nothing to clear — no key, organization id or reveal '
+        + 'password is saved.', 'ok');
+      return;
+    }
+
+    if (!confirm(`Remove the Copado AI ${listOf(held)}?`)) return;
 
     await CopadoAI.clear();
     await chrome.storage.local.remove(GUARD_KEY);
@@ -140,8 +163,7 @@ async function wireCopadoAi() {
 
     $('ai-base').value = CopadoAI.DEFAULTS.baseUrl;
     await renderAiState();
-    showAiMessage('Key, organization id and reveal password removed. '
-      + 'Enter a key and set a new password when you are ready.', 'ok');
+    showAiMessage(`${sentence(listOf(held))} removed.`, 'ok');
   });
 }
 
@@ -271,6 +293,14 @@ async function renderAiState() {
   $('guard-set').textContent = guard ? 'Change reveal password' : 'Set reveal password';
   $('guard-ask').hidden = true;
 
+  // Nothing stored is nothing to remove. Shut rather than clickable with a
+  // message reporting that it did nothing.
+  const holds = Boolean(settings.apiKey || settings.organizationId || guard);
+  $('ai-clear').disabled = !holds;
+  $('ai-clear').title = holds
+    ? 'Remove what is stored for Copado AI'
+    : 'Nothing is saved to clear';
+
   $('guard-note').textContent = guard
     ? 'A password is needed to show these two values. Copado AI keeps working '
       + 'without it — this hides them on screen, it does not lock the extension.'
@@ -361,38 +391,58 @@ function orgCard(org) {
 
   const actions = el('div', 'org-actions');
 
-  const deleteBtn = el('button', 'btn danger small', 'Delete');
-  deleteBtn.type = 'button';
-  deleteBtn.addEventListener('click', () => onDelete(org));
+  /*
+   * Which actions the card offers, decided by whether the session actually
+   * answers rather than by whether a token string survived in storage.
+   *
+   * An expired session is not a connection. Offering Disconnect there asks the
+   * user to end something already over, and withholds the one action the badge
+   * has just told them to take — so the button becomes Connect, and Fresh login
+   * returns alongside it for the case where the browser is still holding a dead
+   * session for this org.
+   */
+  const setActions = (live, checking = false) => {
+    actions.innerHTML = '';
 
-  const connectBtn = el('button', 'btn primary small',
-    org.accessToken ? 'Disconnect' : 'Connect');
-  connectBtn.type = 'button';
-  connectBtn.addEventListener('click', () => {
-    if (org.accessToken) onDisconnect(org);
-    else onConnect(org, connectBtn);
-  });
+    if (!live && !checking) {
+      const freshBtn = el('button', 'btn small', 'Fresh login');
+      freshBtn.type = 'button';
+      freshBtn.title = 'Sign out of this org first, so the login is not skipped';
+      freshBtn.addEventListener('click', () => onConnect(org, freshBtn, true));
+      actions.append(freshBtn);
+    }
+
+    const deleteBtn = el('button', 'btn danger small', 'Delete');
+    deleteBtn.type = 'button';
+    deleteBtn.addEventListener('click', () => onDelete(org));
+
+    const mainBtn = el('button', 'btn primary small', live ? 'Disconnect' : 'Connect');
+    mainBtn.type = 'button';
+    mainBtn.disabled = checking;
+    if (checking) mainBtn.title = 'Checking the session…';
+    mainBtn.addEventListener('click', () => {
+      if (live) onDisconnect(org);
+      else onConnect(org, mainBtn);
+    });
+
+    actions.append(deleteBtn, mainBtn);
+  };
+
+  // A stored token is all there is to go on until the org answers, so the
+  // button it implies is shown but held shut until the check settles.
+  setActions(Boolean(org.accessToken), Boolean(org.accessToken));
 
   // Verified on render: a badge that reads CONNECTED because a string sits in
   // storage is the thing worth avoiding.
-  if (org.accessToken) runVerify(org, badge, sub);
+  if (org.accessToken) runVerify(org, badge, sub, setActions);
 
-  if (!org.accessToken) {
-    const freshBtn = el('button', 'btn small', 'Fresh login');
-    freshBtn.type = 'button';
-    freshBtn.title = 'Sign out of this org first, so the login is not skipped';
-    freshBtn.addEventListener('click', () => onConnect(org, freshBtn, true));
-    actions.append(freshBtn);
-  }
-
-  actions.append(deleteBtn, connectBtn);
   card.append(top, sub, actions);
   return card;
 }
 
 /* -------------------------------------------------------------- verify */
 
-async function runVerify(org, badge, sub) {
+async function runVerify(org, badge, sub, setActions) {
   badge.textContent = 'CHECKING…';
   badge.className = 'status';
 
@@ -406,10 +456,14 @@ async function runVerify(org, badge, sub) {
     badge.textContent = 'CONNECTED';
     badge.className = 'status live';
     sub.textContent = describeSession(org, result);
+    setActions(true);
   } else {
     badge.textContent = 'SESSION EXPIRED';
     badge.className = 'status stale';
     sub.textContent = result.reason;
+    // The session is gone whatever storage still holds, so the card stops
+    // offering to end it and offers to rebuild it instead.
+    setActions(false);
   }
 }
 
