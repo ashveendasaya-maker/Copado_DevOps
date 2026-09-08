@@ -111,7 +111,7 @@ const Copado = (() => {
     if (!res.ok) {
       // Salesforce's own wording, not the status line. The request goes to the
       // console for a bug report; what reaches the screen is readable.
-      console.error(`Copado org: ${path} — ${res.status} ${res.statusText}`, body);
+      //console.error(`Copado org: ${path} — ${res.status} ${res.statusText}`, body);
       throw new Error(salesforceError(body)
         || `The Copado org refused the request (${res.status}).`);
     }
@@ -848,7 +848,7 @@ const Copado = (() => {
       }
     }
 
-    console.debug('Copado: no failure text found', probed);
+    //console.debug('Copado: no failure text found', probed);
     return { notFound: true, probed };
   }
 
