@@ -197,6 +197,9 @@ const state = {
   members: new Map(),    // type key -> member array, or { error }
   loadingAll: false,     // a search or filter is loading every type at once
   trayPinnedClosed: false,
+  // Why the browser has nothing to show, when the source org could not be
+  // reached at all. Held here rather than only in the DOM: see setBrowseError.
+  browseError: null,
 };
 
 const describeCache = new Map();      // object api name -> field array
@@ -241,16 +244,56 @@ async function start() {
     setSourceBanner(null);
     await loadCurrentUser();
   } catch (err) {
-    console.error(err);
+    //console.error(err);
     $('user-name').textContent = 'Not connected';
     $('user-sub').textContent = 'Open a Salesforce tab, then reopen this popup';
 
     // The source org is where every component on this screen comes from, so
     // there is nothing to browse without it.
     setSourceBanner(err.message);
-    $('type-list').innerHTML = '';
-    $('type-list').appendChild(errorBox(err.message));
+    setBrowseError(err.message);
   }
+}
+
+/*
+ * Why the component browser is empty, and the controls that act on it.
+ *
+ * Kept in state rather than written straight into #type-list. Every re-render
+ * clears that element, so an error living only in the DOM survives until the
+ * first search or filter and then vanishes — leaving a full list of types that
+ * cannot open, above a filter button that cannot filter, with nothing left on
+ * screen saying why.
+ *
+ * The controls are disabled alongside it: a search box over a list that cannot
+ * load is a control that does nothing, and offering it invites exactly the
+ * keystroke that used to wipe the message.
+ */
+function setBrowseError(message) {
+  state.browseError = message || null;
+
+  const blocked = Boolean(message);
+
+  $('member-search').disabled = blocked;
+  $('filter-btn').disabled = blocked;
+  $('member-search').title = blocked ? message : '';
+  $('filter-btn').title = blocked ? message : 'Filter';
+
+  // Settings closes with the rest of the screen. Worth knowing: the Copado org
+  // and Copado AI are configured in there and neither needs a source session,
+  // so this also withholds the setup a first-time user would come here to do.
+  // The tooltip says which tab to open rather than leaving a dead icon.
+  $('settings-btn').disabled = blocked;
+  $('settings-btn').title = blocked
+    ? 'Open a Salesforce tab first — settings opens with the source org.'
+    : 'Copado org settings';
+
+  if (blocked) {
+    // A panel left open over a dead list outlives the thing it acts on.
+    $('filter-panel').hidden = true;
+    $('filter-btn').setAttribute('aria-expanded', 'false');
+  }
+
+  renderTypes();
 }
 
 /* --------------------------------------------------------------- session */
@@ -309,7 +352,7 @@ async function sfFetch(path) {
 
     // What Salesforce said, not the status code it said it with. The request
     // goes to the console for a bug report; the message is for reading.
-    console.error(`Salesforce: ${path} — ${res.status} ${res.statusText}`, body);
+    //console.error(`Salesforce: ${path} — ${res.status} ${res.statusText}`, body);
     throw new Error((detail || `The org refused the request (${res.status}).`).slice(0, 400));
   }
   return res.json();
@@ -457,6 +500,10 @@ function applyFilter() {
  * moves again.
  */
 async function narrowOrRender() {
+  // Without a source org there is nothing to narrow, and every query below
+  // would fail one at a time.
+  if (state.browseError) return;
+
   if (!narrowing()) {
     state.loadingAll = false;
     renderTypes();
@@ -510,6 +557,12 @@ const filterIsActive = () =>
 function renderTypes() {
   const host = $('type-list');
   host.innerHTML = '';
+
+  // The one thing worth saying when the org behind every list is unreachable.
+  if (state.browseError) {
+    host.appendChild(errorBox(state.browseError));
+    return;
+  }
 
   if (state.loadingAll) {
     host.innerHTML = '<div class="msg"><span class="spinner"></span>Searching every type&hellip;</div>';
@@ -3133,6 +3186,23 @@ function setSourceBanner(error) {
   text.textContent = `Source org: ${new URL(session.instanceUrl).hostname}`;
 }
 
+/*
+ * The story picker reads its list out of the Copado org, so without a live
+ * session there is nothing for this button to open.
+ *
+ * Still not gated on the metadata selection: browsing stories, and promoting
+ * one, have nothing to do with which components are ticked. This gates on the
+ * one connection it cannot work without.
+ *
+ * The reason goes in the title rather than being left to the banner above,
+ * because a button that does nothing on click explains itself to nobody.
+ */
+function setStoriesEnabled(reason) {
+  const btn = $('stories-btn');
+  btn.disabled = Boolean(reason);
+  btn.title = reason || 'Browse Copado user stories';
+}
+
 async function refreshCopadoBanner() {
   const row = $('conn-copado');
   const dot = $('target-dot');
@@ -3149,6 +3219,7 @@ async function refreshCopadoBanner() {
     text.textContent = orgs.length
       ? `Copado org: ${orgs[0].alias} — not connected, connect it in settings`
       : 'Copado org: not connected — connect one in settings';
+    setStoriesEnabled('Connect the Copado org in settings to browse user stories.');
     return;
   }
 
@@ -3158,6 +3229,11 @@ async function refreshCopadoBanner() {
   row.classList.remove('bad');
   setConnState('target-state', 'checking');
   text.textContent = `Copado org: checking ${connected.alias}…`;
+
+  // Held shut for the length of the check. Opening the picker against a session
+  // that has not answered yet is how a story list arrives empty for a reason
+  // the screen cannot state.
+  setStoriesEnabled('Checking the Copado org…');
 
   const result = await SfSession.verify(connected);
   if (result.renewed) await SfOrgs.update(connected.id, result.renewed);
@@ -3172,10 +3248,12 @@ async function refreshCopadoBanner() {
     text.textContent = who
       ? `Copado org: ${connected.alias} — ${who}`
       : `Copado org: ${connected.alias}`;
+    setStoriesEnabled(null);
   } else {
     row.classList.add('bad');
     setConnState('target-state', 'disconnected');
     text.textContent = `Copado org: ${connected.alias} — session expired, reconnect in settings`;
+    setStoriesEnabled('The Copado org session expired — reconnect it in settings.');
   }
 }
 
