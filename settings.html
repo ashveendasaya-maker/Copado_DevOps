@@ -120,7 +120,7 @@
           <input type="password" id="guard-a" autocomplete="new-password" />
         </label>
         <label>
-          <span>Repeat it</span>
+          <span>Re-enter new password</span>
           <input type="password" id="guard-b" autocomplete="new-password" />
         </label>
         <div class="actions">
@@ -132,7 +132,9 @@
       <p class="card-note" id="guard-note"></p>
 
       <div class="actions">
-        <button type="button" class="btn danger small" id="ai-clear">Clear</button>
+        <!-- Enabled by renderAiState only when something is actually stored. -->
+        <button type="button" class="btn danger small" id="ai-clear" disabled
+                title="Nothing is saved to clear">Clear</button>
         <button type="button" class="btn small" id="guard-set">Set reveal password</button>
         <button type="button" class="btn small" id="ai-verify">Test connection</button>
         <button type="button" class="btn primary small" id="ai-save">Save</button>
