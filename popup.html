@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>Salesforce Metadata Explorer</title>
+<title>Copado Deployment Assistant</title>
 <link rel="stylesheet" href="popup.css" />
 </head>
 <body>
@@ -97,7 +97,10 @@
     <div id="selected-actions">
       <span id="selection-hint">Nothing selected yet</span>
       <button class="btn" id="clear-selection" type="button" disabled>Clear</button>
-      <button class="btn" id="stories-btn" type="button">User stories</button>
+      <!-- Enabled by refreshCopadoBanner once the Copado org answers. Shut
+           until then, so it is never clickable against an unchecked session. -->
+      <button class="btn" id="stories-btn" type="button" disabled
+              title="Checking the Copado org…">User stories</button>
       <button class="btn primary" id="deploy-btn" type="button" disabled>Deploy&hellip;</button>
     </div>
   </section>
