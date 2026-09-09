@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Copado Deployment Assistant</title>
+<link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+
+  <header id="app-header">
+    <div class="avatar" id="user-avatar">&middot;</div>
+    <div class="user-meta">
+      <div class="user-name" id="user-name">Loading&hellip;</div>
+      <div class="user-sub" id="user-sub">Reading session from the active tab</div>
+    </div>
+    <button id="settings-btn" class="icon-btn" title="Copado org settings" aria-label="Copado org settings">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+           stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="3"></circle>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+      </svg>
+    </button>
+  </header>
+
+  <!-- Both connections this extension needs, stated together. Either one
+       missing stops everything downstream, so it is said in red at the top
+       rather than discovered three screens in. -->
+  <div id="conn-banner">
+    <div class="conn-row" id="conn-source">
+      <span class="dot" id="source-dot"></span>
+      <span id="source-text">Reading the Salesforce tab&hellip;</span>
+      <span class="conn-state" id="source-state">CHECKING</span>
+    </div>
+    <div class="conn-row" id="conn-copado">
+      <span class="dot" id="target-dot"></span>
+      <span id="target-text">Checking the Copado org&hellip;</span>
+      <span class="conn-state" id="target-state">CHECKING</span>
+    </div>
+    <div class="conn-row" id="conn-ai">
+      <span class="dot" id="ai-dot"></span>
+      <span id="ai-text">Checking Copado AI&hellip;</span>
+      <span class="conn-state" id="ai-state">CHECKING</span>
+    </div>
+  </div>
+
+  <!-- One list of every metadata type. Each opens to its own members, which is
+       where selection happens. The filter narrows what those lists contain. -->
+  <div id="browse-bar">
+    <input type="search" id="member-search" placeholder="Search components&hellip;" autocomplete="off" />
+    <button id="filter-btn" class="icon-btn dark" type="button" title="Filter" aria-expanded="false">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+           stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+      </svg>
+      <span class="filter-dot" id="filter-dot" hidden></span>
+    </button>
+  </div>
+
+  <div id="filter-panel" hidden>
+    <div class="filter-row">
+      <span class="row-label">Modified</span>
+      <div class="chips" id="date-presets">
+        <button class="chip active" data-days="0" type="button">Any time</button>
+        <button class="chip" data-days="1" type="button">Today</button>
+        <button class="chip" data-days="7" type="button">7 days</button>
+        <button class="chip" data-days="30" type="button">30 days</button>
+        <button class="chip" data-days="90" type="button">90 days</button>
+      </div>
+    </div>
+
+    <div class="filter-row">
+      <span class="row-label">From</span>
+      <input type="date" id="date-from" />
+      <span class="row-label">To</span>
+      <input type="date" id="date-to" />
+    </div>
+
+    <div class="filter-row end">
+      <label class="check"><input type="checkbox" id="filter-custom" /> Custom only</label>
+      <button class="btn small" id="filter-reset" type="button">Reset</button>
+      <button class="btn primary small" id="filter-apply" type="button">Apply</button>
+    </div>
+  </div>
+
+  <section id="panel-types" class="panel active">
+    <div id="type-list"></div>
+  </section>
+
+  <!-- Section 3: review basket for everything picked in sections 1 and 2 -->
+  <section id="selected-section">
+    <button id="selected-bar" type="button" aria-expanded="false" aria-controls="selected-list">
+      <span class="caret">&#9654;</span>
+      <span class="sel-title">Selected Components</span>
+      <span class="badge count" id="selection-count">0</span>
+    </button>
+    <div id="selected-list"></div>
+    <div id="selected-actions">
+      <span id="selection-hint">Nothing selected yet</span>
+      <button class="btn" id="clear-selection" type="button" disabled>Clear</button>
+      <!-- Enabled by refreshCopadoBanner once the Copado org answers. Shut
+           until then, so it is never clickable against an unchecked session. -->
+      <button class="btn" id="stories-btn" type="button" disabled
+              title="Checking the Copado org…">User stories</button>
+      <button class="btn primary" id="deploy-btn" type="button" disabled>Deploy&hellip;</button>
+    </div>
+  </section>
+
+  <div id="modal">
+    <div class="modal-box">
+      <div class="modal-head" id="modal-title">Review</div>
+
+      <!-- Everything goes through Copado user stories. There is no second
+           route: deploying straight at an org with the Metadata API bypassed
+           the pipeline the stories exist to record. -->
+      <div id="deploy-review">
+        <div id="deploy-problems" hidden></div>
+
+        <div class="deploy-block">
+          <div class="deploy-label">Source</div>
+          <div id="deploy-source" class="deploy-org"></div>
+        </div>
+
+        <!-- No Copado org or Copado AI here. Both are in the banner at the top
+             of the popup, with their own connected state, and repeating them on
+             this screen said the same thing twice while pushing the components
+             — the part being reviewed — below the fold. -->
+        <div class="deploy-block">
+          <div class="deploy-label" id="deploy-summary">Components</div>
+          <div id="deploy-components"></div>
+        </div>
+      </div>
+
+      <!-- Step two for the Copado route: pick a story, or open a new one -->
+      <div id="story-picker" hidden>
+        <div id="picker-problems" hidden></div>
+
+        <!-- Browsing needs only the Copado org. Committing and deploying need
+             Copado AI, so its absence limits this screen without closing it. -->
+        <div id="picker-note" class="inline-warn" hidden>
+          Copado AI is not configured, so stories can be browsed but not committed
+          to or deployed. Add the key and organization id in settings.
+        </div>
+
+        <div class="picker-bar">
+          <input type="search" id="story-search" placeholder="Search stories&hellip;" autocomplete="off" />
+          <button class="btn small" id="story-new" type="button">＋ New story</button>
+        </div>
+
+        <div id="story-list"></div>
+
+        <div id="story-form" hidden>
+          <label class="deploy-block">
+            <div class="deploy-label">User story title <b class="req">*</b></div>
+            <input type="text" id="story-title" placeholder="Region field on Account" />
+          </label>
+
+          <div class="deploy-grid">
+            <label>
+              <div class="deploy-label">Project</div>
+              <select id="story-project"></select>
+            </label>
+            <label>
+              <div class="deploy-label">Sprint</div>
+              <select id="story-sprint"></select>
+            </label>
+          </div>
+
+          <!-- No status: a new story gets Copado's own default, and setting it
+               here only invites one that the pipeline then overrides. No commit
+               message either — creating a story is not committing to it, and
+               that step has not happened yet. -->
+          <label class="deploy-block">
+            <div class="deploy-label">Environment</div>
+            <select id="story-environment"></select>
+          </label>
+        </div>
+      </div>
+
+      <!-- Step three: what will run, shown before it does. Read-only. -->
+      <div id="prompt-pane" hidden>
+        <div id="prompt-problems" hidden></div>
+        <div id="prompt-warn" class="inline-warn" hidden></div>
+
+        <!-- Deliberately no "commit and deploy": the two go separately so the
+             commit can be checked against the org before anything is promoted. -->
+        <div class="deploy-block" id="prompt-action-wrap">
+          <div class="deploy-label">Action</div>
+          <div class="segment wide" id="prompt-action">
+            <button data-action="commit" class="active" type="button">Commit</button>
+            <button data-action="deploy" type="button">Deploy</button>
+          </div>
+        </div>
+
+        <div id="prompt-no-components" class="deploy-hint" hidden>
+          Nothing is selected, so only Deploy is available. Pick components in the
+          main list to commit to this story.
+        </div>
+
+<!-- No destination picker. The pipeline decides where a story goes next, and
+     naming an environment here is how a story gets pushed somewhere its
+     pipeline was not going to send it. -->
+
+        <div class="deploy-block">
+          <div class="deploy-label">Summary</div>
+          <div id="prompt-summary" class="deploy-org"></div>
+        </div>
+
+        <!-- Read-only on purpose. The instruction is built from the selection
+             above; a hand-edited one is the easiest way to get a wrong result. -->
+        <label class="deploy-block">
+          <div class="deploy-label">Instruction</div>
+          <textarea id="ai-prompt" rows="5" disabled></textarea>
+        </label>
+
+        <div class="deploy-hint">
+          Built from your selection. Change the selection to change it.
+        </div>
+      </div>
+
+      <div id="deploy-progress" hidden>
+        <div class="progress-spinner"><span class="spinner"></span></div>
+        <div class="progress-text" id="progress-text">Starting…</div>
+
+        <!-- Copado starts work the moment it accepts the instruction, well
+             before the assistant finishes replying. The record it writes shows
+             here so the running state is visible while that reply is awaited. -->
+        <div id="progress-record" hidden></div>
+      </div>
+
+      <!-- The result: what the Copado org holds now. One outcome line, the
+           records that prove it, and the components. Nothing else. -->
+      <div id="result-pane" hidden>
+        <div id="result-problems" hidden></div>
+
+        <div id="result-status" class="result-status" hidden></div>
+
+        <div id="result-story" class="result-story" hidden></div>
+
+        <!-- The Copado records this produced, each one clickable and each
+             showing its own status as the job runs. Watching these here is the
+             point: otherwise the answer to "did it work" is only in Copado. -->
+        <div id="result-records" hidden></div>
+
+        <div id="result-table-wrap" hidden>
+          <div class="deploy-label" id="result-table-head">Components</div>
+          <div id="result-table"></div>
+        </div>
+
+        <!-- Copado's own failure text, verbatim. It names the component, the
+             field and the line, which is the only part that can be acted on. -->
+        <div id="result-failure" hidden>
+          <div class="deploy-label">Error details</div>
+          <pre id="result-failure-text"></pre>
+        </div>
+      </div>
+
+      <!-- A question that has to be answered before the work continues. Only
+           ever answered with the two buttons, never by typing. -->
+      <div id="confirm-pane" hidden>
+        <div class="confirm-head">
+          <div class="confirm-icon">?</div>
+          <div id="confirm-text" class="confirm-text"></div>
+          <div class="confirm-hint">Nothing has been changed yet.</div>
+        </div>
+
+        <!-- Exactly what Yes acts on. A question about "the components" is not
+             answerable without seeing which ones. -->
+        <div id="confirm-table-wrap" hidden>
+          <div class="deploy-label" id="confirm-table-head">Components</div>
+          <div id="confirm-table"></div>
+        </div>
+      </div>
+
+      <div class="modal-foot">
+        <button class="btn" id="modal-close" type="button">Cancel</button>
+        <button class="btn" id="modal-back" type="button" hidden>Back</button>
+        <button class="btn" id="modal-recheck" type="button" hidden>Check again</button>
+        <button class="btn" id="modal-no" type="button" hidden>No</button>
+        <button class="btn primary" id="modal-yes" type="button" hidden>Yes</button>
+        <button class="btn primary" id="modal-commit" type="button" hidden>Commit components</button>
+        <button class="btn primary" id="modal-deploy" type="button" hidden>Deploy</button>
+        <button class="btn primary" id="modal-next" type="button" hidden>Next</button>
+        <button class="btn primary" id="modal-create" type="button" hidden>Run</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="session.js"></script>
+  <script src="copado.js"></script>
+  <script src="crypto.js"></script>
+  <script src="copado-ai.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

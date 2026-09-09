@@ -1,0 +1,1200 @@
+* { box-sizing: border-box; }
+
+body {
+  width: 480px;
+  height: 600px;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 13px;
+  background: #f3f6f9;
+  color: #181818;
+}
+
+/* ---------- Header ---------- */
+
+#app-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: #032d60;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #0176d3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+.user-meta { flex: 1; min-width: 0; }
+
+.user-name {
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-sub {
+  font-size: 11px;
+  color: #b6d5f5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.icon-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: #fff;
+  padding: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-btn:hover { background: rgba(255, 255, 255, 0.15); }
+
+/* Nothing to act on: dimmed rather than hidden, so the control stays where it
+   is expected and the title says what is missing. */
+.icon-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.icon-btn:disabled:hover { background: none; }
+
+/* ---------- Connection banner ---------- */
+
+/* Both connections, one line each. A missing one is red rather than grey: it
+   stops everything downstream, so it is not a status, it is an error. */
+#conn-banner {
+  background: #ecebea;
+  border-bottom: 1px solid #d8dde6;
+  flex-shrink: 0;
+}
+
+.conn-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  font-size: 11px;
+  color: #444;
+}
+
+/* The message, between the dot and the state badge. A long error must not push
+   the row wider than the popup; the full text is on the title attribute. */
+.conn-row span:not(.dot):not(.conn-state) {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.conn-row + .conn-row { border-top: 1px solid #e0dedc; }
+
+.conn-row.bad {
+  background: #fef1f1;
+  color: #b40018;
+  font-weight: 600;
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #a8b7c7;
+  flex-shrink: 0;
+}
+
+.dot.live { background: #2e844a; }
+.conn-row.bad .dot { background: #ea001e; }
+
+/* The state in words. A dot alone asks the reader to know the convention, and
+   carries nothing into a screenshot of a problem. */
+.conn-state {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 1px 6px;
+  border-radius: 8px;
+}
+
+.conn-state.ok   { background: #e3f5e8; color: #1b5b32; }
+.conn-state.wait { background: #ecebea; color: #706e6b; }
+.conn-state.bad  { background: #fdd; color: #b40018; }
+
+/* ---------- Browse bar and filter ---------- */
+
+#browse-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: #fff;
+  border-bottom: 1px solid #d8dde6;
+  flex-shrink: 0;
+}
+
+#browse-bar input[type="search"] { flex: 1; min-width: 0; }
+
+.icon-btn.dark {
+  position: relative;
+  color: #514f4d;
+  border: 1px solid #c9c7c5;
+  border-radius: 4px;
+  padding: 5px;
+  background: #fff;
+}
+
+.icon-btn.dark:hover { background: #f3f6f9; border-color: #0176d3; color: #0176d3; }
+.icon-btn.dark[aria-expanded="true"] { background: #0176d3; border-color: #0176d3; color: #fff; }
+
+.icon-btn.dark:disabled { opacity: 1; color: #a8b7c7; border-color: #e5e5e5; background: #fff; }
+.icon-btn.dark:disabled:hover { background: #fff; border-color: #e5e5e5; color: #a8b7c7; }
+
+#browse-bar input[type="search"]:disabled {
+  background: #f3f6f9;
+  color: #a8b7c7;
+  cursor: not-allowed;
+}
+
+/* Says a filter is on without opening the panel to find out. */
+.filter-dot {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #0176d3;
+  border: 1.5px solid #fff;
+}
+
+#filter-panel {
+  background: #fbfcfd;
+  border-bottom: 1px solid #d8dde6;
+  padding: 9px 12px;
+  flex-shrink: 0;
+}
+
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.filter-row + .filter-row { margin-top: 7px; }
+.filter-row.end { justify-content: flex-end; }
+.filter-row.end .check { margin-right: auto; }
+.filter-row .chips { margin-bottom: 0; }
+
+.panel { display: none; flex: 1; min-height: 0; overflow-y: auto; padding: 10px 12px; }
+.panel.active { display: block; }
+
+input[type="search"],
+input[type="text"],
+input[type="date"],
+input[type="password"],
+select {
+  padding: 6px 8px;
+  border: 1px solid #c9c7c5;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: inherit;
+  background: #fff;
+  color: #181818;
+}
+
+input[type="search"] { flex: 1; min-width: 0; }
+
+.segment { display: flex; border: 1px solid #c9c7c5; border-radius: 4px; overflow: hidden; }
+
+.segment button {
+  padding: 6px 9px;
+  border: none;
+  background: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  color: #706e6b;
+  cursor: pointer;
+  font-family: inherit;
+  border-left: 1px solid #e5e5e5;
+}
+
+.segment button:first-child { border-left: none; }
+.segment button.active { background: #0176d3; color: #fff; }
+
+/* ---------- Object / field rows ---------- */
+
+.obj {
+  background: #fff;
+  border: 1px solid #d8dde6;
+  border-radius: 5px;
+  margin-bottom: 5px;
+  overflow: hidden;
+}
+
+.obj-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 9px;
+  cursor: pointer;
+}
+
+.obj-head:hover { background: #f6f9fc; }
+
+.caret {
+  font-size: 9px;
+  color: #706e6b;
+  width: 9px;
+  flex-shrink: 0;
+  transition: transform 0.12s;
+}
+
+.obj.open .caret { transform: rotate(90deg); }
+
+.obj-name { flex: 1; min-width: 0; }
+
+.obj-label {
+  font-weight: 600;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.obj-api {
+  font-size: 10px;
+  color: #706e6b;
+  font-family: "SFMono-Regular", Consolas, monospace;
+}
+
+.badge {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 8px;
+  background: #e5f0fb;
+  color: #0176d3;
+  flex-shrink: 0;
+  letter-spacing: 0.03em;
+}
+
+.badge.std { background: #ecebea; color: #706e6b; }
+.badge.count { background: #f3f3f3; color: #514f4d; font-weight: 600; }
+
+.fields { border-top: 1px solid #eef1f4; padding: 3px 0; background: #fbfcfd; }
+
+.field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 9px 4px 26px;
+  font-size: 11px;
+}
+
+.field:hover { background: #f0f5fa; }
+
+.field-name {
+  flex: 1;
+  min-width: 0;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.field-type { color: #706e6b; font-size: 10px; flex-shrink: 0; }
+.req { color: #ea001e; font-weight: 700; flex-shrink: 0; }
+
+input[type="checkbox"] { margin: 0; cursor: pointer; flex-shrink: 0; width: 13px; height: 13px; }
+
+/* ---------- Type list ---------- */
+
+.chips { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
+
+.chip {
+  padding: 4px 9px;
+  border: 1px solid #c9c7c5;
+  border-radius: 12px;
+  background: #fff;
+  font-size: 11px;
+  cursor: pointer;
+  font-family: inherit;
+  color: #514f4d;
+}
+
+.chip:hover { border-color: #0176d3; }
+.chip.active { background: #0176d3; border-color: #0176d3; color: #fff; }
+
+.type {
+  background: #fff;
+  border: 1px solid #d8dde6;
+  border-radius: 5px;
+  margin-bottom: 5px;
+  overflow: hidden;
+}
+
+.type-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 10px;
+  cursor: pointer;
+}
+
+.type-head:hover { background: #f6f9fc; }
+.type.open .type-head { border-bottom: 1px solid #eef1f4; }
+.type.open > .type-head .caret { transform: rotate(90deg); }
+
+.type-label { flex: 1; font-size: 12px; font-weight: 600; color: #2b2826; }
+
+.members { background: #fbfcfd; padding: 3px 0; max-height: 320px; overflow-y: auto; }
+
+/* The rarely-used types, folded away. Its own head is greyed so it reads as a
+   drawer rather than as another type. */
+.type.others > .type-head { background: #f6f9fc; }
+.type.others .type-label { color: #706e6b; font-weight: 600; }
+
+.others-body { padding: 6px 8px; background: #fbfcfd; }
+.others-body .type { margin-bottom: 4px; }
+.others-body .type:last-child { margin-bottom: 0; }
+
+/* One click for a whole type, at the top of the list it applies to rather than
+   as a button elsewhere that has to explain its scope. */
+.select-all {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px;
+  border-bottom: 1px solid #eef1f4;
+  position: sticky;
+  top: 0;
+  background: #fbfcfd;
+}
+
+.select-all-label { font-size: 11px; font-weight: 600; color: #0176d3; }
+
+.member {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px;
+  font-size: 11px;
+}
+
+.member:hover { background: #f0f5fa; }
+
+.member-name {
+  flex: 1;
+  min-width: 0;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #2b2826;
+}
+
+.member-date { font-size: 10px; color: #a8a8a8; flex-shrink: 0; }
+
+.row-label { font-size: 11px; color: #514f4d; font-weight: 600; }
+
+/* ---------- Section 3: selected components ---------- */
+
+#selected-section {
+  background: #fff;
+  border-top: 1px solid #d8dde6;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+#selected-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  background: #eef4fa;
+  border: none;
+  border-bottom: 1px solid #d8dde6;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+}
+
+#selected-bar:hover { background: #e3edf7; }
+#selected-bar .caret { transition: transform 0.12s; }
+#selected-section.open #selected-bar .caret { transform: rotate(90deg); }
+
+.sel-title { flex: 1; font-size: 12px; font-weight: 600; color: #032d60; }
+
+#selected-list { display: none; max-height: 190px; overflow-y: auto; padding: 5px 0; }
+#selected-section.open #selected-list { display: block; }
+
+.sel-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  font-size: 11px;
+}
+
+.sel-row:hover { background: #f6f9fc; }
+
+.sel-name {
+  flex: 1;
+  min-width: 0;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sel-kind {
+  font-size: 9px;
+  font-weight: 700;
+  color: #706e6b;
+  letter-spacing: 0.03em;
+  flex-shrink: 0;
+}
+
+.remove-btn {
+  border: none;
+  background: transparent;
+  color: #706e6b;
+  font-size: 15px;
+  line-height: 1;
+  padding: 0 3px;
+  cursor: pointer;
+  border-radius: 3px;
+  flex-shrink: 0;
+  font-family: inherit;
+}
+
+.remove-btn:hover { background: #fef1f1; color: #ea001e; }
+
+#selected-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+}
+
+#selection-hint { flex: 1; font-size: 11px; color: #706e6b; }
+
+.btn {
+  padding: 7px 13px;
+  border-radius: 4px;
+  border: 1px solid #c9c7c5;
+  background: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  color: #0176d3;
+}
+
+.btn:hover { background: #f3f6f9; }
+.btn:disabled { color: #a8b7c7; border-color: #e5e5e5; cursor: not-allowed; background: #fff; }
+
+.btn.primary { background: #0176d3; border-color: #0176d3; color: #fff; }
+.btn.primary:hover { background: #014486; }
+.btn.primary:disabled { background: #c9c7c5; border-color: #c9c7c5; color: #fff; }
+
+/* ---------- States ---------- */
+
+.msg { padding: 14px 10px; text-align: center; font-size: 12px; color: #706e6b; }
+
+.msg.error {
+  color: #ea001e;
+  background: #fef1f1;
+  border: 1px solid #f5c6cb;
+  border-radius: 5px;
+  text-align: left;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.warn {
+  font-size: 10px;
+  color: #8c4b02;
+  background: #fcf3e6;
+  border: 1px solid #f0d3a8;
+  border-radius: 4px;
+  padding: 5px 7px;
+  margin-bottom: 6px;
+}
+
+.spinner {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid #d8dde6;
+  border-top-color: #0176d3;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  vertical-align: -2px;
+  margin-right: 5px;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ---------- Modal ---------- */
+
+#modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+#modal.show { display: flex; }
+
+.modal-box {
+  background: #fff;
+  border-radius: 6px;
+  width: 100%;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.modal-head {
+  padding: 10px 12px;
+  border-bottom: 1px solid #d8dde6;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.modal-box textarea {
+  flex: 1;
+  min-height: 260px;
+  border: none;
+  padding: 10px 12px;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 11px;
+  resize: none;
+  outline: none;
+  color: #181818;
+}
+
+.modal-foot {
+  padding: 8px 12px;
+  border-top: 1px solid #d8dde6;
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+/* Amber, not green: a target org whose session stopped answering. */
+.dot.stale { background: #fe9339; }
+
+/* ---------- Deployment review ---------- */
+
+/* Scrolls inside the modal rather than pushing the footer out, since eight
+   saved orgs makes the target list tall. No display property here: the pane is
+   toggled with the hidden attribute. */
+#deploy-review { padding: 12px 14px; overflow-y: auto; flex: 1 1 auto; min-height: 0; }
+
+.deploy-block { margin-bottom: 14px; }
+.deploy-block:last-child { margin-bottom: 0; }
+
+.deploy-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #706e6b;
+  margin-bottom: 5px;
+}
+
+/* Parenthetical on a label — says what a connection is for, without competing
+   with the label itself. */
+.hint {
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  color: #a8a8a8;
+}
+
+/* Explains the control above it, so it reads as a note rather than a field. */
+.deploy-hint {
+  font-size: 11px;
+  line-height: 1.45;
+  color: #706e6b;
+  margin-top: 6px;
+}
+
+.btn.small { padding: 4px 8px; font-size: 11px; }
+
+.deploy-org {
+  font-size: 12px;
+  color: #2b2826;
+  background: #f3f6f9;
+  border: 1px solid #d8dde6;
+  border-radius: 4px;
+  padding: 7px 9px;
+  word-break: break-all;
+}
+
+.deploy-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 10px; margin-bottom: 14px; }
+.deploy-grid label { display: block; }
+
+#deploy-review input[type="text"],
+#deploy-review select,
+#deploy-review textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 6px 8px;
+  border: 1px solid #c9c7c5;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: inherit;
+  color: #181818;
+  background: #fff;
+}
+
+#deploy-review textarea { resize: vertical; }
+#deploy-review select:disabled { background: #f3f6f9; color: #a8b7c7; }
+#deploy-review input:focus, #deploy-review select:focus, #deploy-review textarea:focus {
+  outline: 2px solid #0176d3;
+  outline-offset: -1px;
+  border-color: #0176d3;
+}
+
+/* Copado's own validation messages land here, so it has to hold several lines. */
+#deploy-problems {
+  background: #fef1f1;
+  border: 1px solid #f5c6cb;
+  border-radius: 4px;
+  padding: 8px 10px;
+  margin-bottom: 12px;
+}
+
+/* pre-wrap because an API error arrives as reason, then fix, then where — the
+   line breaks are what separate them. */
+.problem {
+  font-size: 11px;
+  color: #b40018;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.problem + .problem { margin-top: 5px; }
+
+#deploy-components { max-height: 180px; overflow-y: auto; }
+
+.component-row {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  font-size: 11px;
+  padding: 4px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.component-name { flex: 1; color: #2b2826; word-break: break-all; }
+.component-type { color: #706e6b; flex-shrink: 0; }
+
+/* ---------- Shared segment control ---------- */
+
+.segment.wide { display: flex; width: 100%; }
+.segment.wide button { flex: 1; }
+
+#deploy-progress {
+  padding: 34px 16px;
+  text-align: center;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.progress-spinner { margin-bottom: 12px; }
+.progress-text { font-size: 12px; color: #514f4d; }
+
+/* The record Copado wrote, shown while its job is still running. Left-aligned
+   inside a centred pane because it is a row, not a caption. */
+#progress-record {
+  margin: 14px auto 0;
+  max-width: 340px;
+  text-align: left;
+  border-top: 1px solid #e5e5e5;
+  padding-top: 10px;
+}
+
+/* ---------- Story picker ---------- */
+
+#story-picker { padding: 12px 14px; overflow-y: auto; flex: 1 1 auto; min-height: 0; }
+
+#picker-problems {
+  background: #fef1f1;
+  border: 1px solid #f5c6cb;
+  border-radius: 4px;
+  padding: 8px 10px;
+  margin-bottom: 12px;
+}
+
+.picker-bar { display: flex; gap: 6px; margin-bottom: 10px; }
+.picker-bar input[type="search"] { flex: 1; min-width: 0; }
+
+#story-list { margin-bottom: 10px; }
+
+.story-row {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: #fff;
+  border: 1px solid #d8dde6;
+  border-radius: 5px;
+  padding: 7px 9px;
+  margin-bottom: 5px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.story-row:hover { border-color: #0176d3; background: #f6f9fc; }
+.story-row.chosen { border-color: #0176d3; background: #eef4fa; box-shadow: inset 0 0 0 1px #0176d3; }
+
+.story-head { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; }
+
+.story-number {
+  font-size: 11px;
+  font-weight: 700;
+  color: #0176d3;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+a.story-number:hover { text-decoration: underline; }
+
+/* What is happening to the story right now, from its newest commit record.
+   Distinct from Copado's own workflow status, which says nothing about whether
+   a job is running. */
+.story-commit {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  padding: 2px 6px;
+  border-radius: 9px;
+  flex-shrink: 0;
+}
+
+.story-commit.ok   { background: #e3f5e8; color: #1b5b32; }
+.story-commit.wait { background: #fcf3e6; color: #8c4b02; }
+.story-commit.fail { background: #fef1f1; color: #b40018; }
+/* Finished, but with nothing to show for it. Grey rather than amber: amber
+   with a spinner said it was still working. */
+.story-commit.idle { background: #ecebea; color: #514f4d; }
+
+/* The failure, inside the story's own details. Preformatted because Copado puts
+   each failing component on its own line. */
+.story-failure {
+  margin: 4px 0 8px;
+  padding: 7px 9px;
+  background: #fef1f1;
+  border: 1px solid #f5c6cb;
+  border-radius: 4px;
+}
+
+.story-failure-text {
+  margin: 0 0 7px;
+  font-size: 10px;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  line-height: 1.5;
+  color: #b40018;
+  max-height: 150px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.story-failure-actions { display: flex; justify-content: flex-end; }
+
+.story-meta-type.fail { color: #b40018; font-weight: 600; }
+
+a.story-meta-name { color: #0176d3; text-decoration: none; }
+a.story-meta-name:hover { text-decoration: underline; }
+
+.story-title { font-size: 12px; color: #2b2826; line-height: 1.35; }
+.story-context { font-size: 10px; color: #706e6b; margin-top: 2px; }
+
+#story-form { border-top: 1px solid #d8dde6; padding-top: 12px; }
+
+#story-form input[type="text"],
+#story-form select,
+#story-form textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 6px 8px;
+  border: 1px solid #c9c7c5;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: inherit;
+  color: #181818;
+  background: #fff;
+}
+
+#story-form textarea { resize: vertical; }
+#story-form select:disabled { background: #f3f6f9; color: #a8b7c7; }
+
+/* ---------- Prompt pane ---------- */
+
+#prompt-pane { padding: 12px 14px; overflow-y: auto; flex: 1 1 auto; min-height: 0; }
+
+#prompt-problems {
+  background: #fef1f1;
+  border: 1px solid #f5c6cb;
+  border-radius: 4px;
+  padding: 8px 10px;
+  margin-bottom: 12px;
+}
+
+#prompt-pane input[type="text"],
+#prompt-pane textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 6px 8px;
+  border: 1px solid #c9c7c5;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: inherit;
+  color: #181818;
+  background: #fff;
+}
+
+/* Reads as a sentence, not as code: it describes the action rather than being
+   something to edit. */
+#prompt-pane textarea {
+  resize: none;
+  line-height: 1.5;
+}
+
+/* Non-editable on purpose, and it has to look it. */
+#prompt-pane textarea:disabled {
+  background: #f3f6f9;
+  color: #514f4d;
+  border-color: #d8dde6;
+  cursor: default;
+}
+
+#prompt-pane input:focus, #prompt-pane textarea:focus {
+  outline: 2px solid #0176d3;
+  outline-offset: -1px;
+  border-color: #0176d3;
+}
+
+/* ---------- Result ---------- */
+
+#result-pane { padding: 12px 14px; overflow-y: auto; flex: 1 1 auto; min-height: 0; }
+
+#result-problems {
+  background: #fef1f1;
+  border: 1px solid #f5c6cb;
+  border-radius: 4px;
+  padding: 8px 10px;
+  margin-bottom: 12px;
+}
+
+/* One line saying what the org now holds. Colour carries the verdict, so it
+   reads at a glance without the sentence having to be parsed. */
+.result-status {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.45;
+  border-radius: 4px;
+  padding: 9px 11px;
+  margin-bottom: 10px;
+}
+
+.result-status.ok      { color: #1b5b32; background: #e3f5e8; border: 1px solid #b7e1c4; }
+.result-status.warn    { color: #8c4b02; background: #fcf3e6; border: 1px solid #f0d3a8; }
+.result-status.fail    { color: #b40018; background: #fef1f1; border: 1px solid #f5c6cb; }
+.result-status.working { color: #514f4d; background: #f3f6f9; border: 1px solid #d8dde6; }
+
+.result-story {
+  font-size: 12px;
+  font-weight: 600;
+  color: #2b2826;
+  padding-bottom: 9px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid #e5e5e5;
+  word-break: break-word;
+}
+
+/* The Copado records this run produced — one row each, updating in place while
+   their job runs. */
+#result-records { margin-bottom: 10px; }
+
+.record-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  background: #f3f6f9;
+  border: 1px solid #d8dde6;
+  border-radius: 4px;
+  padding: 7px 9px;
+}
+
+.record-row + .record-row { margin-top: 6px; }
+
+/* Monospace: the identifying part is a commit hash, read character by
+   character. */
+.record-name {
+  flex: 1;
+  min-width: 0;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  color: #514f4d;
+  word-break: break-all;
+}
+
+a.record-name.link {
+  color: #0176d3;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+a.record-name.link:hover { text-decoration: underline; }
+
+.record-status {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  font-weight: 600;
+}
+
+.record-status-text { white-space: nowrap; }
+
+.record-status.ok   { color: #2e844a; }
+.record-status.wait { color: #706e6b; }
+.record-status.idle { color: #706e6b; }
+.record-status.fail { color: #b40018; }
+
+.record-when { color: #a8a8a8; flex-shrink: 0; }
+
+/* Sized to sit on a line of 11px text rather than lead a paragraph. */
+.spinner.tiny {
+  width: 9px;
+  height: 9px;
+  border-width: 2px;
+  margin-right: 0;
+  vertical-align: -1px;
+}
+
+#result-table { max-height: 260px; overflow-y: auto; }
+
+/* Copado's failure text as it was written. Preformatted because each failure is
+   its own line, and collapsing them turns a list of problems into one sentence
+   nobody can read. */
+#result-failure { margin-top: 12px; }
+
+#result-failure pre {
+  margin: 0;
+  font-size: 11px;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  line-height: 1.5;
+  color: #b40018;
+  background: #fef1f1;
+  border: 1px solid #f5c6cb;
+  border-radius: 4px;
+  padding: 8px 10px;
+  max-height: 220px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.outcome-row {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  font-size: 11px;
+  padding: 5px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.outcome-name { flex: 1; color: #2b2826; word-break: break-all; }
+.outcome-type { color: #706e6b; flex-shrink: 0; }
+
+.outcome-status {
+  flex-shrink: 0;
+  min-width: 78px;
+  text-align: right;
+  font-weight: 600;
+}
+
+.outcome-status.ok   { color: #2e844a; }
+.outcome-status.wait { color: #706e6b; }
+.outcome-status.idle { color: #706e6b; }
+.outcome-status.fail { color: #b40018; }
+
+/* ---------- Confirmation ---------- */
+
+/* A question with exactly two answers, both of them buttons in the footer.
+   There is nothing to type here on purpose. */
+#confirm-pane {
+  padding: 20px 14px 14px;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.confirm-head { text-align: center; }
+
+.confirm-icon {
+  width: 38px;
+  height: 38px;
+  margin: 0 auto 12px;
+  border-radius: 50%;
+  background: #fcf3e6;
+  border: 1px solid #f0d3a8;
+  color: #8c4b02;
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 36px;
+}
+
+.confirm-text {
+  font-size: 13px;
+  line-height: 1.5;
+  color: #2b2826;
+  margin-bottom: 8px;
+}
+
+.confirm-hint { font-size: 11px; color: #706e6b; }
+
+/* The list a Yes acts on, below the question rather than beside it: the
+   question is what is being answered, the table is what it is about. */
+#confirm-table-wrap {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid #e5e5e5;
+  text-align: left;
+}
+
+#confirm-table { max-height: 200px; overflow-y: auto; }
+
+/* ---------- Attached metadata disclosure ---------- */
+
+.story-head { justify-content: flex-start; }
+
+.story-toggle {
+  margin-left: auto;
+  border: 1px solid #d8dde6;
+  background: #fff;
+  border-radius: 3px;
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 600;
+  color: #0176d3;
+  padding: 2px 6px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.story-toggle:hover { background: #eef4fa; border-color: #0176d3; }
+
+.story-meta {
+  margin-top: 7px;
+  padding-top: 6px;
+  border-top: 1px solid #eef1f4;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.story-meta-msg { font-size: 10px; color: #706e6b; margin-bottom: 4px; }
+
+.story-meta-row {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  font-size: 11px;
+  padding: 2px 0;
+}
+
+.story-meta-name {
+  flex: 1;
+  min-width: 0;
+  color: #2b2826;
+  word-break: break-all;
+  font-family: "SFMono-Regular", Consolas, monospace;
+}
+
+.story-meta-type { color: #706e6b; flex-shrink: 0; font-size: 10px; }
+
+/* Which environment a story belongs to, and when that is not the one being
+   browsed — the mismatch Copado rejects at commit time. */
+.story-env {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: #514f4d;
+  background: #f3f6f9;
+  border: 1px solid #d8dde6;
+  border-radius: 9px;
+  padding: 1px 6px;
+}
+
+.story-warn {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: #8c4b02;
+  background: #fcf3e6;
+  border: 1px solid #f0d3a8;
+  border-radius: 9px;
+  padding: 1px 6px;
+  cursor: help;
+}
+
+.story-section + .story-section { margin-top: 8px; }
+
+.story-section-head {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #706e6b;
+  margin-bottom: 3px;
+}
+
+/* Shared with the settings page's generic-login warning. */
+.inline-warn {
+  font-size: 11px;
+  line-height: 1.45;
+  color: #8c4b02;
+  background: #fcf3e6;
+  border: 1px solid #f0d3a8;
+  border-radius: 4px;
+  padding: 8px 10px;
+  margin-bottom: 12px;
+}

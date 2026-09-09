@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Target Org Settings</title>
+<link rel="stylesheet" href="settings.css" />
+</head>
+<body>
+
+  <header>
+    <h1>Copado Org Settings</h1>
+    <p>The Copado org where user stories are created</p>
+  </header>
+
+  <main>
+    <div class="note">
+      Connect opens the org's login page in a tab and adopts the session you
+      create there. Your password never reaches this extension, and nothing is
+      installed or configured in the target org.
+    </div>
+
+    <h2>Copado org</h2>
+    <div class="card">
+      <div id="form-msg"></div>
+
+      <form id="org-form" autocomplete="off">
+        <label>
+          <span>Connection name <b class="req">*</b></span>
+          <input type="text" id="alias" placeholder="UAT Sandbox" required />
+        </label>
+
+        <label>
+          <span>Environment</span>
+          <select id="environment">
+            <option value="custom">My Domain URL</option>
+            <option value="https://login.salesforce.com">Production / Developer</option>
+            <option value="https://test.salesforce.com">Sandbox</option>
+          </select>
+        </label>
+
+        <label id="custom-url-wrap">
+          <span>Login URL <b class="req">*</b></span>
+          <input type="text" id="login-url" placeholder="https://mydomain.my.salesforce.com" />
+        </label>
+
+        <div class="inline-warn" id="generic-warning" hidden>
+          The generic login page resolves to whichever org the browser is already
+          signed in to, and the extension cannot tell that apart from the one you
+          meant. Use the org's My Domain URL so a wrong session is refused.
+        </div>
+
+        <div class="actions">
+          <button type="button" class="btn" id="reset-btn">Reset</button>
+          <button type="submit" class="btn primary" id="save-btn">Save</button>
+        </div>
+      </form>
+    </div>
+
+    <div id="org-list"></div>
+
+    <h2>Copado AI</h2>
+    <div class="card">
+      <div id="ai-msg"></div>
+
+      <p class="card-note">
+        Copado AI is not a Salesforce org and has no session to borrow. Create a
+        Personal Access Key in the Robotic Testing app under
+        <b>User settings &amp; preferences</b>, and take the organization id from
+        the API URL &mdash; every endpoint is scoped to one.
+      </p>
+
+      <label>
+        <span>API base URL</span>
+        <input type="text" id="ai-base" placeholder="https://copadogpt-api.robotic.copado.com" />
+      </label>
+
+      <!-- Both masked by default, both revealable. A secret on screen is one
+           shoulder away from being someone else's; a secret you can never read
+           back is how a wrong organization id survives three support messages. -->
+      <label>
+        <span>Organization ID <b class="req">*</b></span>
+        <span class="masked">
+          <input type="password" id="ai-org" autocomplete="off" />
+          <button type="button" class="reveal" data-for="ai-org" aria-label="Show">Show</button>
+        </span>
+      </label>
+
+      <label>
+        <span>Personal access key <b class="req">*</b></span>
+        <span class="masked">
+          <input type="password" id="ai-key" autocomplete="off" />
+          <button type="button" class="reveal" data-for="ai-key" aria-label="Show">Show</button>
+        </span>
+      </label>
+
+      <!-- Which assistant does which job is fixed by Copado, not a preference.
+           It lives in copado-ai.js and is not editable here. -->
+
+      <!-- Asked for before the values are shown, never before they are used.
+           Copado AI keeps working whether this is set or not. -->
+      <div id="guard-ask" hidden>
+        <label>
+          <span>Reveal password</span>
+          <input type="password" id="guard-input" autocomplete="off" />
+        </label>
+        <div class="actions">
+          <button type="button" class="btn small" id="guard-cancel">Cancel</button>
+          <button type="button" class="btn primary small" id="guard-ok">Reveal</button>
+        </div>
+      </div>
+
+      <div id="guard-new" hidden>
+        <!-- Only when one is already set: changing it needs the old one. -->
+        <label id="guard-old-wrap" hidden>
+          <span>Current reveal password</span>
+          <input type="password" id="guard-old" autocomplete="off" />
+        </label>
+        <label>
+          <span>New reveal password</span>
+          <input type="password" id="guard-a" autocomplete="new-password" />
+        </label>
+        <label>
+          <span>Re-enter new password</span>
+          <input type="password" id="guard-b" autocomplete="new-password" />
+        </label>
+        <div class="actions">
+          <button type="button" class="btn small" id="guard-new-cancel">Cancel</button>
+          <button type="button" class="btn primary small" id="guard-new-ok">Set password</button>
+        </div>
+      </div>
+
+      <p class="card-note" id="guard-note"></p>
+
+      <div class="actions">
+        <!-- Enabled by renderAiState only when something is actually stored. -->
+        <button type="button" class="btn danger small" id="ai-clear" disabled
+                title="Nothing is saved to clear">Clear</button>
+        <button type="button" class="btn small" id="guard-set">Set reveal password</button>
+        <button type="button" class="btn small" id="ai-verify">Test connection</button>
+        <button type="button" class="btn primary small" id="ai-save">Save</button>
+      </div>
+    </div>
+
+    <h2>How connecting works</h2>
+    <div class="card">
+      <p class="card-note">
+        Prefer a My Domain URL over the generic login pages. If the browser
+        already holds a session for a different org, <code>login.salesforce.com</code>
+        can land on that one instead; a My Domain URL always resolves to the org
+        you meant. The connection shows which org and user it actually captured
+        so a wrong target is visible immediately.
+      </p>
+      <ul class="checklist">
+        <li>One org is connected at a time. Connecting another releases the
+            previous one, but only once the new login succeeds.</li>
+        <li>SSO and MFA work normally &mdash; Salesforce runs the login, not this extension.</li>
+        <li>A session is not a refresh token: it ends on logout and on the org's
+            session timeout, and you reconnect when it does.</li>
+        <li>Disconnect only drops the extension's copy. Your browser login stays active.</li>
+      </ul>
+    </div>
+  </main>
+
+  <script src="session.js"></script>
+  <script src="crypto.js"></script>
+  <script src="copado-ai.js"></script>
+  <script src="settings.js"></script>
+</body>
+</html>
